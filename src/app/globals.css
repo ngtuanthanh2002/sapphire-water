@@ -182,6 +182,28 @@
   }
 }
 
+/* ===== AMBIENT VIDEO =====
+   Background footage is decoration, not a player: no native controls
+   (iOS shows a play button when autoplay is refused), no taps, no
+   long-press save menu, no selection. */
+.ambient-video {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.ambient-video::-webkit-media-controls,
+.ambient-video::-webkit-media-controls-enclosure,
+.ambient-video::-webkit-media-controls-panel,
+.ambient-video::-webkit-media-controls-overlay-play-button,
+.ambient-video::-webkit-media-controls-start-playback-button,
+.ambient-video::-webkit-media-controls-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 0 !important;
+}
+
 /* ===== REDUCED MOTION ===== */
 @media (prefers-reduced-motion: reduce) {
   *,

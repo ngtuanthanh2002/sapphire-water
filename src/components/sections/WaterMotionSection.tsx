@@ -64,6 +64,7 @@ function ChapterFrame({
             <LoopVideo
               src={chapter.video}
               poster={chapter.poster}
+              sizes="(max-width: 768px) 80vw, 40vw"
               label={chapter.alt}
               className="absolute inset-0 w-full h-full object-cover"
             />

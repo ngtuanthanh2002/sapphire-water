@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { preload } from "react-dom";
+import { useRef } from "react";
 import {
   motion,
   useMotionTemplate,
@@ -12,79 +11,7 @@ import {
 } from "motion/react";
 import Image from "next/image";
 import { BOTTLE, EASE_OUT, EASE_SURFACE, SCROLL_SPRING } from "@/lib/motion";
-
-const HERO_VIDEO = "/video/web/hero-water.mp4";
-/** Exact first frame of the loop — shown until the footage can play. */
-const HERO_POSTER = "/video/web/hero-water-poster.jpg";
-/** Slightly slowed so the surface breathes rather than churns. */
-const HERO_RATE = 0.8;
-
-/**
- * Ambient hero footage: muted, seamless loop (the clip's tail is cross-faded
- * into its head), no controls, no context menu, no download / PiP / casting.
- * Pauses when off-screen or when the tab is hidden.
- */
-function HeroVideo({ still }: { still: boolean }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  preload(HERO_POSTER, { as: "image", fetchPriority: "high" });
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    video.muted = true;
-    video.defaultPlaybackRate = HERO_RATE;
-    video.playbackRate = HERO_RATE;
-    if (still) {
-      video.pause();
-      return;
-    }
-
-    let visible = true;
-    const play = () => {
-      if (visible && !document.hidden) video.play().catch(() => {});
-    };
-    const applyRate = () => {
-      video.playbackRate = HERO_RATE;
-    };
-    const io = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (visible) play();
-      else video.pause();
-    });
-    const onVisibility = () => (document.hidden ? video.pause() : play());
-
-    io.observe(video);
-    video.addEventListener("loadeddata", applyRate);
-    document.addEventListener("visibilitychange", onVisibility);
-    play();
-    return () => {
-      io.disconnect();
-      video.removeEventListener("loadeddata", applyRate);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [still]);
-
-  return (
-    <video
-      ref={ref}
-      src={HERO_VIDEO}
-      poster={HERO_POSTER}
-      autoPlay={!still}
-      muted
-      loop
-      playsInline
-      preload="auto"
-      aria-hidden
-      tabIndex={-1}
-      draggable={false}
-      disablePictureInPicture
-      disableRemotePlayback
-      controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
-      onContextMenu={(e) => e.preventDefault()}
-      className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
-    />
-  );
-}
+import LoopVideo from "@/components/ui/LoopVideo";
 
 /**
  * Motion moment 01 — "The Parting".
@@ -148,7 +75,16 @@ export default function HeroSection() {
             transition={{ duration: 2.4, ease: EASE_OUT }}
           >
             <motion.div className="absolute inset-0" style={still ? undefined : { scale: bgScale }}>
-              <HeroVideo still={still} />
+              {/* Seamless loop (tail cross-faded into head), slowed to breathe;
+                  its exact first frame stands in until it plays. */}
+              <LoopVideo
+                src="/video/web/hero-water.mp4"
+                poster="/video/web/hero-water-poster.jpg"
+                rate={0.8}
+                eager
+                rootMargin="0px"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
             </motion.div>
           </motion.div>
           {/* Light wash keeps the navy type crisp on the bright surface */}
