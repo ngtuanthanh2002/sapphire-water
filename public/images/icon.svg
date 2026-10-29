@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 413.62 413.62">
+  <!-- Generator: Adobe Illustrator 30.8.2, SVG Export Plug-In . SVG Version: 2.1.4 Build 7)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#New_Gradient_Swatch_copy);
+      }
+
+      .st1 {
+        fill: url(#New_Gradient_Swatch_copy1);
+      }
+    </style>
+    <linearGradient id="New_Gradient_Swatch_copy" data-name="New Gradient Swatch copy" x1="206.81" y1="259.03" x2="206.81" y2="326.55" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2e88c9"/>
+      <stop offset="1" stop-color="#0f4d93"/>
+    </linearGradient>
+    <linearGradient id="New_Gradient_Swatch_copy1" data-name="New Gradient Swatch copy" x1="206.81" y1="75.73" x2="206.81" y2="320.04" xlink:href="#New_Gradient_Swatch_copy"/>
+  </defs>
+  <path class="st0" d="M207.06,244.15c1.82,2.84,3,4.56,4.06,6.34,7.4,12.47,15.03,24.82,22.11,37.48,8.67,15.51,4.09,32.44-10.58,40.85-14.48,8.31-33.72,3.81-42.05-10.04-5.06-8.41-6.42-17.45-1.51-26.27,8.85-15.9,18.2-31.53,27.97-48.36Z"/>
+  <path class="st1" d="M315.54,261.73l-108.73-181.09-108.73,181.09c-35.63,67.17-68.28,71.25-68.28,71.25,26.72-1.86,72.73-14.47,72.73-14.47l104.28-168.11,104.28,168.11s46.02,12.62,72.73,14.47c0,0-32.66-4.08-68.28-71.25Z"/>
+</svg>
