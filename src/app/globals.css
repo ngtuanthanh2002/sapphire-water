@@ -204,6 +204,17 @@
   opacity: 0 !important;
 }
 
+/* Where footage can't play inline (iOS in-app browsers), the still frame
+   breathes instead — slow enough to read as water, not as an effect. */
+.ambient-still {
+  animation: ambient-still 14s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  transform-origin: 50% 60%;
+}
+@keyframes ambient-still {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to { transform: scale(1.06) translate3d(-1%, -0.6%, 0); }
+}
+
 /* ===== REDUCED MOTION ===== */
 @media (prefers-reduced-motion: reduce) {
   *,

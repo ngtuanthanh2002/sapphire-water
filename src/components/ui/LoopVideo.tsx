@@ -1,20 +1,37 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useReducedMotion } from "motion/react";
 import Image from "next/image";
+import {
+  canPlayInline,
+  canPlayInlineOnServer,
+  markInlineBroken,
+  subscribeInline,
+} from "@/lib/inlineVideo";
+
+type WebKitVideo = HTMLVideoElement & {
+  webkitDisplayingFullscreen?: boolean;
+  webkitExitFullscreen?: () => void;
+  webkitPresentationMode?: "inline" | "fullscreen" | "picture-in-picture";
+  webkitSetPresentationMode?: (mode: "inline") => void;
+};
 
 /**
  * Ambient background footage — muted, inline, looping, and never a "player".
  *
- * - The poster is a real image underneath; the video only fades in once it is
- *   actually playing. If a browser refuses autoplay (iOS Low Power Mode,
- *   in-app WebViews), visitors see the still frame — never a play button.
- * - Native controls are suppressed (see `.ambient-video` in globals.css), and
- *   a transparent shield takes every tap / long-press, so nothing can be
- *   played, paused, saved, copied or opened full screen.
- * - Lazy by default: nothing downloads until the frame nears the viewport,
- *   and playback pauses whenever it leaves or the tab is hidden.
+ * - The poster is a real image underneath; the video only fades in once its
+ *   frames are actually advancing. Where autoplay is refused, visitors see the
+ *   still frame — never a play button.
+ * - Playback is only ever started by the page, never by a tap: in WebViews
+ *   without inline playback a gesture-started `play()` opens full screen.
+ * - Where inline playback isn't possible (iOS in-app browsers) no <video> is
+ *   mounted at all; the still frame breathes gently instead.
+ * - If a video still manages to enter full screen, it is pulled back and
+ *   every ambient video on the page falls back to its poster.
+ * - Native controls are suppressed (`.ambient-video` in globals.css) and a
+ *   transparent shield takes every tap / long-press / drag.
+ * - Lazy by default; pauses off-screen and in hidden tabs.
  *
  * Callers position it: the parent must be `relative`/`absolute`.
  */
@@ -28,8 +45,6 @@ export default function LoopVideo({
   eager = false,
   sizes = "100vw",
 }: {
-  /** `sizes` for the poster image. */
-  sizes?: string;
   src: string;
   poster: string;
   label?: string;
@@ -40,15 +55,18 @@ export default function LoopVideo({
   rootMargin?: string;
   /** Above the fold: load immediately and preload the poster. */
   eager?: boolean;
+  /** `sizes` for the poster image. */
+  sizes?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const reduce = useReducedMotion();
+  const inline = useSyncExternalStore(subscribeInline, canPlayInline, canPlayInlineOnServer);
   const [playing, setPlaying] = useState(false);
+  const useVideo = inline && !reduce;
 
   useEffect(() => {
-    const video = ref.current;
-    if (!video || reduce) return;
-    // Belt and braces for iOS / in-app WebViews (React sets these as props)
+    const video = ref.current as WebKitVideo | null;
+    if (!video) return;
     video.muted = true;
     video.defaultMuted = true;
     video.setAttribute("muted", "");
@@ -61,18 +79,36 @@ export default function LoopVideo({
     const play = () => {
       if (!visible || document.hidden) return;
       video.play().catch(() => {
-        /* refused — poster stays; we retry on the first touch */
+        /* refused — the poster stays; we never retry from a tap */
       });
     };
     // `timeupdate` (not `playing`): it also fires for footage that autoplayed
     // before hydration, and only once frames are really advancing.
-    const onPlaying = () => {
+    const onAdvancing = () => {
       video.playbackRate = rate;
       setPlaying(true);
-      video.removeEventListener("timeupdate", onPlaying);
+      video.removeEventListener("timeupdate", onAdvancing);
     };
-    // Some WebViews only allow playback after a user gesture: retry once then
-    const onGesture = () => play();
+    // Safety net: never let background footage become a full-screen player
+    const bail = () => {
+      try {
+        if (video.webkitPresentationMode && video.webkitPresentationMode !== "inline") {
+          video.webkitSetPresentationMode?.("inline");
+        }
+        if (video.webkitDisplayingFullscreen) video.webkitExitFullscreen?.();
+        if (document.fullscreenElement === video) void document.exitFullscreen();
+      } catch {
+        /* nothing more we can do — the poster takes over below */
+      }
+      video.pause();
+      markInlineBroken();
+    };
+    const onPresentation = () => {
+      if (video.webkitPresentationMode && video.webkitPresentationMode !== "inline") bail();
+    };
+    const onFullscreen = () => {
+      if (document.fullscreenElement === video) bail();
+    };
     const onVisibility = () => (document.hidden ? video.pause() : play());
 
     const io = new IntersectionObserver(
@@ -91,18 +127,23 @@ export default function LoopVideo({
       { rootMargin }
     );
     io.observe(video);
-    video.addEventListener("timeupdate", onPlaying);
+    video.addEventListener("timeupdate", onAdvancing);
+    video.addEventListener("webkitbeginfullscreen", bail);
+    video.addEventListener("webkitpresentationmodechanged", onPresentation);
+    video.addEventListener("enterpictureinpicture", bail);
+    document.addEventListener("fullscreenchange", onFullscreen);
     document.addEventListener("visibilitychange", onVisibility);
-    document.addEventListener("touchend", onGesture, { passive: true });
-    document.addEventListener("click", onGesture);
     return () => {
       io.disconnect();
-      video.removeEventListener("timeupdate", onPlaying);
+      video.pause();
+      video.removeEventListener("timeupdate", onAdvancing);
+      video.removeEventListener("webkitbeginfullscreen", bail);
+      video.removeEventListener("webkitpresentationmodechanged", onPresentation);
+      video.removeEventListener("enterpictureinpicture", bail);
+      document.removeEventListener("fullscreenchange", onFullscreen);
       document.removeEventListener("visibilitychange", onVisibility);
-      document.removeEventListener("touchend", onGesture);
-      document.removeEventListener("click", onGesture);
     };
-  }, [reduce, rate, rootMargin]);
+  }, [useVideo, rate, rootMargin]);
 
   const block = (e: React.SyntheticEvent) => e.preventDefault();
 
@@ -115,9 +156,9 @@ export default function LoopVideo({
         sizes={sizes}
         preload={eager}
         draggable={false}
-        className={`object-cover select-none pointer-events-none ${className}`}
+        className={`object-cover select-none pointer-events-none ${inline ? "" : "ambient-still"} ${className}`}
       />
-      {!reduce && (
+      {useVideo && (
         <video
           ref={ref}
           className={`ambient-video ${className}`}
@@ -142,7 +183,7 @@ export default function LoopVideo({
       <span
         aria-hidden
         className="absolute inset-0 select-none"
-        style={{ WebkitTouchCallout: "none" }}
+        style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
         onContextMenu={block}
         onDragStart={block}
         onCopy={block}
