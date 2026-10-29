@@ -12,6 +12,7 @@ import {
 import Image from "next/image";
 import { BOTTLE, EASE_OUT, EASE_SURFACE, SCROLL_SPRING } from "@/lib/motion";
 import LoopVideo from "@/components/ui/LoopVideo";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 /**
  * Motion moment 01 — "The Parting".
@@ -47,14 +48,16 @@ export default function HeroSection() {
   const captionOpacity = useTransform(p, [0.55, 0.8], [0, 1]);
   const captionY = useTransform(p, [0.55, 0.8], [24, 0]);
 
-  const still = reduce ?? false;
+  // The parting is a desktop scene. On phones the hero is one plain screen
+  // that simply scrolls away — no pin, no lens.
+  const desktop = useMediaQuery("(min-width: 768px)", true);
+  const still = (reduce ?? false) || !desktop;
 
   return (
     <section
       ref={sectionRef}
       aria-label="Sapphire Water"
-      className="relative"
-      style={{ height: still ? "100svh" : "210svh" }}
+      className={`relative min-h-[620px] ${reduce ? "h-[100svh]" : "h-[100svh] md:h-[210svh]"}`}
     >
       <div
         className="sticky top-0 h-[100svh] min-h-[620px] w-full overflow-hidden bg-white select-none"

@@ -87,6 +87,15 @@
     overflow-x: clip;
   }
 
+  /* WebKit (Safari and every iOS browser) doesn't take body's clip as the
+     viewport's, so stray transforms could still be panned to sideways.
+     Clip at the root and on <main> too — `clip` never creates a scroll
+     container, so the pinned scenes keep working. */
+  html,
+  main {
+    overflow-x: clip;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     line-height: 1.05;
     font-weight: 600;
