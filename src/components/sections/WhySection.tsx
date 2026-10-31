@@ -69,7 +69,7 @@ export default function WhySection() {
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-[18svh]">
             <span className="eyebrow">
-              <i>07</i> Lý do
+              <i>08</i> Lý do
             </span>
             <h2 className="display mt-6 whitespace-nowrap" style={{ fontSize: "clamp(2.75rem, 5vw, 5rem)", color: "var(--ink)" }}>
               <RevealLines lines={["Tại sao chọn", <b key="b">Sapphire?</b>]} />

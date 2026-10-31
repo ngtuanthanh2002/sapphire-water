@@ -39,12 +39,12 @@ const products = [
     caption: "Nguồn nước tinh khiết cho gia đình và văn phòng — dùng trực tiếp hoặc với cây nóng lạnh.",
     image: JUG,
     alt: "Bình nước Sapphire Water 20L có vòi",
-    height: "80%",
+    height: "90%",
     specs: [
-      { side: "left", top: "30%", title: "Công nghệ RO – UV – Ozone", desc: "Lọc thẩm thấu ngược RO cao cấp, khử khuẩn bằng UV và Ozone, kết hợp tạo khoáng." },
-      { side: "right", top: "46%", title: "Khoáng chất bổ sung", desc: "Bổ sung Canxi (Ca²⁺) và Magie (Mg²⁺) — những khoáng chất thiết yếu." },
-      { side: "left", top: "64%", title: "Đạt chuẩn chất lượng", desc: "Phù hợp QCVN 6-1:2010/BYT, quy trình sản xuất đạt ISO 22000:2018." },
-      { side: "right", top: "84%", title: "Vòi rót tiện lợi", desc: "Rót trực tiếp từ vòi. Sau khi mở nắp, nên dùng hết trong vòng 7 ngày." },
+      { side: "left", top: "21%", title: "Công nghệ RO – UV – Ozone", desc: "Lọc thẩm thấu ngược RO cao cấp, khử khuẩn bằng UV và Ozone, kết hợp tạo khoáng." },
+      { side: "right", top: "39%", title: "Khoáng chất bổ sung", desc: "Bổ sung Canxi (Ca²⁺) và Magie (Mg²⁺) — những khoáng chất thiết yếu." },
+      { side: "left", top: "65%", title: "Đạt chuẩn chất lượng", desc: "Phù hợp QCVN 6-1:2010/BYT, quy trình sản xuất đạt ISO 22000:2018." },
+      { side: "right", top: "82%", title: "Vòi rót tiện lợi", desc: "Rót trực tiếp từ vòi. Sau khi mở nắp, nên dùng hết trong vòng 7 ngày." },
     ] as Spec[],
   },
 ] as const;
@@ -234,7 +234,7 @@ export default function ProductSection() {
                       alt={active.alt}
                       width={active.image.width}
                       height={active.image.height}
-                      sizes={active.id === "20l" ? "(max-width: 768px) 70vw, 460px" : "(max-width: 768px) 40vw, 280px"}
+                      sizes={active.id === "20l" ? "(max-width: 768px) 75vw, 500px" : "(max-width: 768px) 40vw, 280px"}
                       className="h-full w-auto select-none"
                       draggable={false}
                     />
@@ -278,6 +278,35 @@ export default function ProductSection() {
               </motion.div>
             ))}
           </div>
+        </div>
+
+        {/* The whole range, side by side */}
+        <div className="mt-[clamp(5rem,14vh,9rem)] grid grid-cols-1 lg:grid-cols-12 gap-y-10 lg:gap-x-8 items-center">
+          <div className="lg:col-span-4">
+            <h3 className="display" style={{ fontSize: "var(--text-3xl)", color: "var(--ink)" }}>
+              <RevealLines lines={["Một dòng nước,", <b key="b">đủ mọi nhu cầu</b>]} />
+            </h3>
+            <FadeUp as="p" className="lede mt-6 max-w-[24rem]" delay={0.2}>
+              Từ chai 500ml nhỏ gọn trong tay đến bình 20L cho gia đình và văn phòng — cùng một
+              nguồn nước, cùng một sự trong trẻo.
+            </FadeUp>
+          </div>
+          <motion.div
+            className="lg:col-span-8 relative overflow-hidden"
+            style={{ aspectRatio: "1540 / 1021", borderRadius: 4 }}
+            initial={reduce ? false : { clipPath: "inset(10% 10% 10% 10%)" }}
+            whileInView={{ clipPath: "inset(0% 0% 0% 0%)" }}
+            viewport={{ once: true, margin: "0px 0px -15% 0px" }}
+            transition={{ duration: 1.6, ease: EASE_SURFACE }}
+          >
+            <Image
+              src="/images/range-presenter.png"
+              alt="Nhân viên Sapphire Water giới thiệu chai 500ml, lốc chai và bình 20L"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 66vw"
+            />
+          </motion.div>
         </div>
       </div>
     </section>

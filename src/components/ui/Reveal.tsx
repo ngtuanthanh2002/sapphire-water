@@ -22,9 +22,9 @@ export function ScrollLine({
   className?: string;
   style?: CSSProperties;
 }) {
-  // 135%, not 110%: Vietnamese stacked diacritics sit above the line box and
-  // would otherwise peek out of the mask before the line rises.
-  const y = useTransform(p, [at, at + span], ["135%", "0%"], { ease: easeOutCubic });
+  // 155%: Vietnamese stacked diacritics sit above the line box and would
+  // otherwise peek out of the mask before the line rises.
+  const y = useTransform(p, [at, at + span], ["155%", "0%"], { ease: easeOutCubic });
   return (
     <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
       <motion.span className={`block ${className ?? ""}`} style={{ ...style, y }}>

@@ -3,17 +3,17 @@
 import { useEffect, useRef } from "react";
 import {
   motion,
+  transform,
   useMotionTemplate,
   useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
   type MotionValue,
 } from "motion/react";
 import Image from "next/image";
-import { BOTTLE, SCROLL_SPRING } from "@/lib/motion";
+import { BOTTLE } from "@/lib/motion";
 import LoopVideo from "@/components/ui/LoopVideo";
 import { ScrollLine } from "@/components/ui/Reveal";
 import BrandDrop from "@/components/ui/BrandDrop";
@@ -106,16 +106,14 @@ function ChapterFrame({
  * Timeline, authored in svh of pinned scroll so beats keep their real length
  * whatever the section height. The finale keeps its own 0.57 → 1 clock.
  */
-const SCROLL = 760; // section height − one screen
+const SCROLL = 599; // section height − one screen
 const at = (svh: number) => svh / SCROLL;
-const FINALE_FROM = 1 - 266 / SCROLL;
-const fin = (x: number) => FINALE_FROM + ((x - 0.57) / 0.43) * (1 - FINALE_FROM);
-/** The current travels, then rests on each chapter long enough to read it. */
-const TRACK = { toFirst: [at(130), at(235)], toSecond: [at(295), at(400)], out: [at(480), at(505)] } as const;
-
-const easeInOutSine = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * t);
-const segment = (v: number, [a, b]: readonly [number, number]) =>
-  easeInOutSine(Math.min(1, Math.max(0, (v - a) / (b - a))));
+const FINALE_FROM = at(369);
+/** Finale clock against scroll: its 0.76 → 0.85 reading pause is kept short so the scene never stalls. */
+const FINALE = { clock: [0.57, 0.76, 0.85, 1], scroll: [FINALE_FROM, at(487), at(507), 1] };
+const fin = (x: number) => transform(x, FINALE.clock, FINALE.scroll);
+/** One unbroken pan with no rests, so the scene never sits still under the wheel. */
+const TRACK = { from: at(100), to: at(355), out: [at(355), at(380)] } as const;
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 /** Liquid settle: overshoots ~4% then rests. */
@@ -295,26 +293,24 @@ export default function WaterMotionSection() {
     target: sectionRef,
     offset: ["start start", "end end"],
   });
-  const p = useSpring(scrollYProgress, SCROLL_SPRING);
+  // Scroll-tied directly — no spring, so the slide tracks the wheel 1:1.
+  const p = scrollYProgress;
 
-  // Rest positions are measured, not guessed: each chapter centred on screen
-  // (clamped to the end of the track), plus the full track distance.
-  const stops = useMotionValue<[number, number, number]>([0, 0, 0]);
+  // Measured, not guessed: the last chapter centred on screen (clamped to the
+  // end of the track), plus the full track distance.
+  const stops = useMotionValue<[number, number]>([0, 0]);
   const staticDrift = useMotionValue("0%");
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
     const measure = () => {
-      const vw = window.innerWidth;
+      // clientWidth, not innerWidth: the stage excludes the page scrollbar.
+      const vw = stageRef.current?.clientWidth ?? window.innerWidth;
       const max = Math.max(0, track.scrollWidth - vw);
       const base = track.getBoundingClientRect().left;
-      const centre = (el: Element | undefined, fallback: number) => {
-        if (!el) return fallback;
-        const r = el.getBoundingClientRect();
-        return Math.min(max, Math.max(0, r.left - base + r.width / 2 - vw / 2));
-      };
-      const [first, second] = Array.from(track.querySelectorAll(".chapter"));
-      stops.set([centre(first, 0), centre(second, max), max]);
+      const last = track.querySelector(".chapter:last-of-type")?.getBoundingClientRect();
+      const end = last ? Math.min(max, Math.max(0, last.left - base + last.width / 2 - vw / 2)) : max;
+      stops.set([end, max]);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -343,26 +339,26 @@ export default function WaterMotionSection() {
   const rippleScale = useTransform(p, [at(38), at(88)], [0.2, 5]);
   const rippleOpacity = useTransform(p, [at(38), at(47), at(88)], [0, 0.7, 0]);
 
-  // 3 — the current: intro → rest on 01 → rest on 02
+  // 3 — the current: arrives on the last chapter at TRACK.to, then keeps its
+  // speed through the fade instead of braking into a stop.
   const trackX = useTransform(() => {
-    const v = p.get();
-    const [first, second] = stops.get();
-    return -(first * segment(v, TRACK.toFirst) + (second - first) * segment(v, TRACK.toSecond));
+    const t = Math.max(0, (p.get() - TRACK.from) / (TRACK.to - TRACK.from));
+    return -stops.get()[0] * t;
   });
   const drift = useTransform(() => {
-    const max = stops.get()[2];
+    const max = stops.get()[1];
     return `${6 - 12 * (max ? -trackX.get() / max : 0)}%`;
   });
   const trackOpacity = useTransform(p, [at(75), at(100), ...TRACK.out], [0, 1, 1, 0]);
 
   // Finale keeps its own clock (0.57 → 1) over the last stretch
-  const finaleP = useTransform(p, [FINALE_FROM, 1], [0.57, 1]);
+  const finaleP = useTransform(p, FINALE.scroll, FINALE.clock);
 
   // Gauge
   const gauge = useTransform(p, [at(75), fin(0.86)], [0, 1]);
   const gaugeOpacity = useTransform(p, [at(75), at(100), fin(0.84), fin(0.87)], [0, 1, 1, 0]);
   const chapterIndex = useTransform<number, string>(p, (v) =>
-    v < at(265) ? "01" : v < FINALE_FROM ? "02" : "03",
+    v < at(280) ? "01" : v < FINALE_FROM ? "02" : "03",
   );
 
   if (reduce) {
@@ -418,7 +414,7 @@ export default function WaterMotionSection() {
         <motion.div className="absolute inset-0 z-[2] flex items-center" style={{ opacity: trackOpacity }}>
           <motion.div
             ref={trackRef}
-            className="flex items-center gap-[12vw] md:gap-[9vw] pl-[var(--section-pad-x)] pr-[14vw] w-max"
+            className="flex shrink-0 items-center gap-[12vw] md:gap-[9vw] pl-[var(--section-pad-x)] pr-[14vw] w-max"
             style={{ x: trackX }}
           >
             <div className="shrink-0 w-[82vw] md:w-[38vw]">

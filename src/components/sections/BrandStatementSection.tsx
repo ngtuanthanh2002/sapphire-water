@@ -1,9 +1,49 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import {
+  motion,
+  useMotionTemplate,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import Image from "next/image";
 import { FadeUp, RevealLines } from "@/components/ui/Reveal";
+
+/** The statement says no explanation is needed; the campaign image opens wide and proves it. */
+function CampaignBanner() {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "start 0.5"],
+  });
+  const inset = useTransform(scrollYProgress, [0.1, 1], [9, 0]);
+  const radius = useTransform(scrollYProgress, [0.1, 1], [6, 0]);
+  const clip = useMotionTemplate`inset(0% ${inset}% round ${radius}px)`;
+  const scale = useTransform(scrollYProgress, [0, 1], [1.12, 1]);
+
+  return (
+    <motion.div
+      ref={ref}
+      className="relative overflow-hidden w-full"
+      style={{ aspectRatio: "1672 / 941", ...(reduce ? {} : { clipPath: clip }) }}
+    >
+      <motion.div className="absolute inset-0" style={reduce ? undefined : { scale }}>
+        <Image
+          src="/images/campaign-banner.png"
+          alt="Sapphire Water — Pure Life, Pure Water: chai nước giữa làn nước tung bọt trên hồ núi"
+          fill
+          className="object-cover select-none"
+          sizes="100vw"
+          draggable={false}
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
 
 const W = 1440;
 const H = 140;
@@ -70,7 +110,7 @@ export default function BrandStatementSection() {
           className="mt-10 uppercase"
           style={{ fontSize: "var(--text-xs)", letterSpacing: "0.3em", color: "var(--sapphire-light)", fontWeight: 500 }}
         >
-          <span style={{ opacity: 0.6 }}>08</span>&nbsp;&nbsp;Thông điệp thương hiệu
+          <span style={{ opacity: 0.6 }}>10</span>&nbsp;&nbsp;Thông điệp thương hiệu
         </p>
 
         <h2
@@ -101,6 +141,8 @@ export default function BrandStatementSection() {
           </span>
         </FadeUp>
       </div>
+
+      <CampaignBanner />
     </section>
   );
 }
