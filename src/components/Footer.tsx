@@ -1,11 +1,13 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const navItems = [
-  { label: "Tinh khiết", href: "#essence" },
-  { label: "Trải nghiệm", href: "#motion" },
-  { label: "Sản phẩm", href: "#product" },
-  { label: "Chất lượng", href: "#quality" },
-  { label: "Thương hiệu", href: "#brand" },
+  { label: "Tinh khiết", href: "/#essence" },
+  { label: "Trải nghiệm", href: "/#motion" },
+  { label: "Sản phẩm", href: "/#product" },
+  { label: "Chất lượng", href: "/#quality" },
+  { label: "Thương hiệu", href: "/#brand" },
+  { label: "Blog", href: "/blog" },
 ];
 
 // Static on purpose: the page is fully prerendered (cacheComponents),
@@ -40,7 +42,7 @@ export default function Footer() {
 
           <nav aria-label="Liên kết chân trang" className="flex flex-wrap gap-x-10 gap-y-4">
             {navItems.map((item, i) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 className="footer-link flex items-baseline gap-3"
@@ -50,7 +52,7 @@ export default function Footer() {
                   0{i + 1}
                 </span>
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
